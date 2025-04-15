@@ -1,0 +1,307 @@
+<!DOCTYPE html><html lang="id">
+<head>
+  <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kuis Interaktif Dark Mode</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #FFb6c1;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .quiz-container {
+      background-color: #2d2940;
+      border-radius: 16px;
+      padding: 30px;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      transition: all 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .question {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .answers button {
+      width: 100%;
+      background-color: #7c3aed;
+      color: white;
+      border: none;
+      padding: 15px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .answers button:hover {
+      background-color: #7c3aed;
+    }
+    .answers button.correct {
+      background-color: #22c55e;
+    }
+    .answers button.incorrect {
+      background-color: #ef4444;
+    }
+    .hidden {
+      display: none !important;
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      z-index: -1;
+    }
+    .visible {
+      display: block;
+      visibility: visible;
+      opacity: 1;
+      z-index: 1;
+    }
+    .leaderboard {
+      margin-top: 30px;
+    }
+    .leaderboard h2 {
+      margin-bottom: 10px;
+    }
+    .leaderboard ul {
+      list-style: none;
+      padding: 0;
+    }
+    .leaderboard li {
+      background-color: #3f3c5a;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .review {
+      margin-top: 20px;
+    }
+    .review h3 {
+      margin-bottom: 10px;
+    }
+    .review p {
+      margin: 5px 0;
+    }
+    .start-screen {
+      text-align: center;
+    }
+    .start-screen input {
+      padding: 10px;
+      width: 80%;
+      margin: 15px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .start-screen button {
+      padding: 12px 24px;
+      background-color: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .start-screen button:hover {
+      background-color: #9f48ff;
+    }
+    #timer {
+      font-size: 18px;
+      text-align: right;
+      margin-bottom: 10px;
+      color: #e0e0e0;
+    }
+    #play-again-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #7c3aed;
+      color: white;
+      cursor: pointer;
+    }
+    #play-again-btn:hover {
+      background-color: #9f48ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <div id="start-screen" class="start-screen visible">
+      <h1>Selamat Datang di Kuis Seru!</h1>
+      <p>Masukkan namamu untuk mulai:</p>
+      <input type="text" id="player-name" placeholder="Nama Anda">
+      <br>
+      <button onclick="startQuiz()">Mulai Kuis</button>
+    </div><div id="question-container" class="hidden">
+  <div id="timer">Waktu: <span id="time">10</span> detik</div>
+  <div id="question" class="question"></div>
+  <div id="answers" class="answers"></div>
+</div>
+
+<div id="leaderboard" class="leaderboard hidden"></div>
+<div id="review" class="review"></div>
+
+  </div>  <script>
+    const quizData = [
+      {
+        question: "Apa arti dari al-falaq dalam bahasa arab!",
+        answers: ["Terbelah atau terpisah", "waktu subuh", "orang kafir", "Sapi betina"],
+        correct: 0
+      },
+      {
+        question: "Apa nama surat terakhir dalam al-qur'an?",
+        answers: ["an-nasr", "al-ikhlas", "al-falaq", "an-nass"],
+        correct: 3
+      },
+            {
+        question: "Ada berapakah jumlah asmaul husna?",
+        answers: ["89", "98", "99", "25"],
+        correct: 2
+      },
+            {
+        question: "Hari raya idul adha dirayakan setiap tanggal?",
+        answers: ["11 Dzulhijjah", "1 muharom", "12 Rabiul awal", "10 Dzulhijjah"],
+        correct: 3
+      },
+      {
+        question: "Bagaimana cara wudhu bila anggota badan di amputasi?",
+        answers: ["berdeda dari cara wudhu biasanya", "Sama seperti cara wudhu pada umumnya", "hanya membasuh bagian yang tersisa", "tidak membasuh apa-apa"],
+        correct: 1
+      }
+    ];
+
+    let playerName = "Kamu";
+    let current = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 10;
+    const userAnswers = [];
+    const questionEl = document.getElementById("question");
+    const answersEl = document.getElementById("answers");
+    const container = document.getElementById("question-container");
+    const leaderboardEl = document.getElementById("leaderboard");
+    const reviewEl = document.getElementById("review");
+    const startScreen = document.getElementById("start-screen");
+    const timeDisplay = document.getElementById("time");
+
+    function startQuiz() {
+      const inputName = document.getElementById("player-name").value.trim();
+      if (inputName !== "") playerName = inputName;
+
+      startScreen.classList.add("hidden");
+      startScreen.classList.remove("visible");
+      container.classList.remove("hidden");
+      container.classList.add("visible");
+      showQuestion();
+    }
+
+    function showQuestion() {
+      clearInterval(timer);
+      timeLeft = 10;
+      updateTimer();
+      timer = setInterval(() => {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          autoSkip();
+        }
+      }, 1000);
+
+      const q = quizData[current];
+      questionEl.textContent = q.question;
+      answersEl.innerHTML = "";
+
+      q.answers.forEach((answer, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = answer;
+        btn.onclick = () => selectAnswer(i, btn);
+        answersEl.appendChild(btn);
+      });
+    }
+
+    function updateTimer() {
+      timeDisplay.textContent = timeLeft;
+    }
+
+    function autoSkip() {
+      selectAnswer(-1, null);
+    }
+
+    function selectAnswer(index, btn) {
+      clearInterval(timer);
+      const correctIndex = quizData[current].correct;
+      const buttons = answersEl.querySelectorAll("button");
+      buttons.forEach(b => b.disabled = true);
+
+      if (index === correctIndex) {
+        if (btn) btn.classList.add("correct");
+        score++;
+      } else {
+        if (btn) btn.classList.add("incorrect");
+        buttons[correctIndex].classList.add("correct");
+      }
+
+      userAnswers.push({
+        question: quizData[current].question,
+        selected: index >= 0 ? quizData[current].answers[index] : "(Tidak dijawab)",
+        correct: quizData[current].answers[correctIndex],
+        isCorrect: index === correctIndex
+      });
+
+      current++;
+
+      setTimeout(() => {
+        if (current < quizData.length) {
+          showQuestion();
+        } else {
+          showLeaderboard();
+        }
+      }, 1200);
+    }
+
+    function showLeaderboard() {
+      container.classList.add("hidden");
+      leaderboardEl.classList.remove("hidden");
+
+      const players = [playerName, "Mala", "Tiara", "Nada", "Aldi"];
+      const finalScores = players.map(name => {
+        return {
+          name,
+          score: name === playerName ? score : Math.floor(Math.random() * quizData.length + 1)
+        };
+      }).sort((a, b) => b.score - a.score);
+
+      let html = `<h2>Leaderboard</h2><ul>`;
+      finalScores.forEach(p => {
+        html += `<li><strong>${p.name}</strong>: ${p.score} poin</li>`;
+      });
+      html += `</ul>`;
+      html += `<button id="play-again-btn" onclick="location.reload()">Main Lagi</button>`;
+
+      leaderboardEl.innerHTML = html;
+
+      showReview();
+    }
+
+    function showReview() {
+      let html = `<h3>Review Jawaban</h3>`;
+      userAnswers.forEach(ans => {
+        html += `<p><strong>${ans.question}</strong><br>Jawabanmu: ${ans.selected}<br>` +
+                `Jawaban benar: ${ans.correct}<br>` +
+                (ans.isCorrect ? "<span style='color:#22c55e;'>Benar</span>" : "<span style='color:#ef4444;'>Salah</span>") +
+                `</p>`;
+      });
+      reviewEl.innerHTML = html;
+    }
+  </script></body>
+</html>
